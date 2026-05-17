@@ -1,100 +1,294 @@
-name: Build Kernel
+name: Alioth Kernel Build
 
 on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
   workflow_dispatch:
     inputs:
-      device:
-        description: 'Target Device Codename (e.g., lmi, umi)'
+      root_manager:
+        description: 'Root Manager'
         required: true
-        default: 'lmi'
+        default: 'kernelsu'
         type: choice
         options:
-          - psyche
-          - thyme
-          - umi
-          - munch
-          - lmi
-          - cmi
-          - cas
-          - apollo
-          - alioth
-          - elish
-          - enuma
-          - dagu
-          - pipa
+          - kernelsu
+          - sukisu
+          - resuki
+          - magisk
 
-      script:
-        description: 'Select Build Script'
-        required: true
-        default: 'build.sh'
-        type: choice
-        options:
-          - build.sh
-          - build-miui.sh
-
-      ksu:
-        description: 'Enable KernelSU (ReSukiSU-SuSFS)'
-        required: true
-        type: boolean
-        default: true
+env:
+  KERNEL_SOURCE: https://github.com/MiCode/Xiaomi_Kernel_OpenSource
+  KERNEL_BRANCH: alioth-r-oss
+  ANYKERNEL_REPO: https://github.com/osm0sis/AnyKernel3
+  DEFCONFIG: alioth_defconfig
+  ARCH: arm64
+  CLANG_VERSION: "18"
 
 jobs:
   build:
-    name: Build Kernel for ${{ inputs.device }} (${{ inputs.script }}) (${{ inputs.ksu && 'KSU' || 'NoKSU' }})
-    runs-on: ubuntu-latest
+    name: Build (${{ github.event.inputs.root_manager || 'kernelsu' }})
+    runs-on: ubuntu-22.04
+    timeout-minutes: 120
 
     steps:
-    - name: Checkout Source
-      uses: actions/checkout@v6
-      with:
-        fetch-depth: 1
 
-    - name: Cleanup Disk Space
-      run: |
-        sudo rm -rf /usr/share/dotnet
-        sudo rm -rf /opt/ghc
-        sudo rm -rf "/usr/local/share/boost"
-        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+      # ────────────────────────────────────────────
+      # 1. Checkout this repo (contains defconfig + patches)
+      # ────────────────────────────────────────────
+      - name: Checkout build repo
+        uses: actions/checkout@v4
+        with:
+          path: build-repo
 
-    - name: Install Dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential git curl wget bison flex zip bc cpio libssl-dev ccache python-is-python3
+      # ────────────────────────────────────────────
+      # 2. Install dependencies
+      # ────────────────────────────────────────────
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            bc bison build-essential ca-certificates flex \
+            git gnupg libssl-dev libelf-dev lld llvm \
+            make ninja-build python3 rsync unzip wget zip \
+            zstd ccache libncurses-dev
 
-    - name: Setup Cache (ccache)
-      uses: actions/cache@v5
-      with:
-        path: ~/.cache/ccache_mikernel
-        key: kernel-ccache-${{ inputs.device }}-${{ inputs.script }}-${{ github.run_id }}
-        restore-keys: |
-          kernel-ccache-${{ inputs.device }}-${{ inputs.script }}-
-          kernel-ccache-${{ inputs.device }}-
-          kernel-ccache-
+      # ────────────────────────────────────────────
+      # 3. Setup ccache (speeds up rebuilds 3-5x)
+      # ────────────────────────────────────────────
+      - name: Setup ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ccache-alioth-${{ github.event.inputs.root_manager || 'kernelsu' }}-${{ github.sha }}
+          restore-keys: |
+            ccache-alioth-${{ github.event.inputs.root_manager || 'kernelsu' }}-
+            ccache-alioth-
 
-    - name: Setup Toolchain (ZyC-Clang 16)
-      run: |
-        mkdir -p $HOME/zyc-clang
-        cd $HOME/zyc-clang
-        wget -q https://github.com/ZyCromerZ/Clang/releases/download/16.0.6-20260510-release/Clang-16.0.6-20260510.tar.gz
-        tar -zxvf Clang-16.0.6-20260510.tar.gz
+      - name: Configure ccache
+        run: |
+          ccache --max-size=5G
+          ccache --set-config=compression=true
+          echo "CCACHE_DIR=$HOME/.ccache" >> $GITHUB_ENV
 
-    - name: Build Kernel
-      run: |
-        chmod +x build.sh build-miui.sh
-        
-        echo "Using script: ${{ inputs.script }}"
+      # ────────────────────────────────────────────
+      # 4. Download Neutron Clang (cached)
+      # ────────────────────────────────────────────
+      - name: Cache Clang toolchain
+        id: cache-clang
+        uses: actions/cache@v4
+        with:
+          path: ~/toolchains/neutron-clang
+          key: neutron-clang-18-20240214
 
-        if [ "${{ inputs.ksu }}" == "true" ]; then
-          echo "Building with KernelSU..."
-          bash ${{ inputs.script }} ${{ inputs.device }} ksu
-        else
-          echo "Building without KernelSU..."
-          bash ${{ inputs.script }} ${{ inputs.device }}
-        fi
+      - name: Download Neutron Clang 18
+        if: steps.cache-clang.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/toolchains/neutron-clang
+          NEUTRON_URL="https://github.com/Neutron-Toolchains/clang-build-catalogue/releases/download/14022024/neutron-clang-14022024.tar.zst"
+          wget -q --show-progress -O /tmp/neutron-clang.tar.zst "$NEUTRON_URL"
+          tar --zstd -xf /tmp/neutron-clang.tar.zst -C ~/toolchains/neutron-clang
+          echo "Clang version: $(~/toolchains/neutron-clang/bin/clang --version | head -1)"
 
-    - name: Upload Artifacts
-      uses: actions/upload-artifact@v6
-      with:
-        name: Kernel-${{ inputs.device }}-${{ inputs.script }}-${{ inputs.ksu && 'KSU' || 'NoKSU' }}-${{ github.run_number }}
-        path: ./*.zip
-        if-no-files-found: error
+      # ────────────────────────────────────────────
+      # 5. Clone kernel source (shallow)
+      # ────────────────────────────────────────────
+      - name: Clone kernel source
+        run: |
+          echo "[+] Cloning Xiaomi SM8250 kernel (alioth-r-oss)..."
+          git clone --depth=1 \
+            --branch ${{ env.KERNEL_BRANCH }} \
+            ${{ env.KERNEL_SOURCE }} \
+            kernel-source \
+          || git clone --depth=1 \
+            https://github.com/xiaomi-sm8250-devs/android_kernel_xiaomi_sm8250 \
+            kernel-source
+          echo "Kernel source ready: $(ls kernel-source | head -5)"
+
+      # ────────────────────────────────────────────
+      # FIX: Copy alioth_defconfig into kernel source
+      # (This is the fix for: "No rule to make target alioth_defconfig")
+      # ────────────────────────────────────────────
+      - name: Install alioth_defconfig
+        run: |
+          echo "[+] Installing alioth_defconfig into arch/arm64/configs/..."
+          cp -f build-repo/defconfig/alioth_defconfig \
+                kernel-source/arch/arm64/configs/alioth_defconfig
+          echo "[+] Defconfig installed:"
+          wc -l kernel-source/arch/arm64/configs/alioth_defconfig
+
+      # ────────────────────────────────────────────
+      # 6. Setup root manager
+      # ────────────────────────────────────────────
+      - name: Setup root manager — ${{ github.event.inputs.root_manager || 'kernelsu' }}
+        working-directory: kernel-source
+        run: |
+          ROOT="${{ github.event.inputs.root_manager || 'kernelsu' }}"
+          echo "ROOT_MANAGER=$ROOT" >> $GITHUB_ENV
+
+          case "$ROOT" in
+            kernelsu)
+              echo "[+] Setting up KernelSU..."
+              curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
+              echo "KSU_VERSION=$(cat KernelSU/VERSION 2>/dev/null || echo unknown)" >> $GITHUB_ENV
+              ;;
+
+            sukisu)
+              echo "[+] Setting up SukiSU Ultra (KernelSU + SUSFS)..."
+              curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s main
+              git clone --depth=1 https://gitlab.com/simonpunk/susfs4ksu.git susfs4ksu
+              for p in susfs4ksu/kernel_patches/*.patch; do
+                [ -f "$p" ] || continue
+                git apply "$p" --ignore-space-change --ignore-whitespace 2>/dev/null \
+                  && echo "  [ok] $(basename $p)" \
+                  || echo "  [skip] $(basename $p)"
+              done
+              echo "SukiSU Ultra ready"
+              ;;
+
+            resuki)
+              echo "[+] Setting up ResuKi SU..."
+              curl -LSs "https://raw.githubusercontent.com/rsuntk/KernelSU/main/kernel/setup.sh" | bash -s main
+              ;;
+
+            magisk)
+              echo "[+] Magisk-compatible build (no KernelSU)..."
+              rm -rf KernelSU 2>/dev/null || true
+              sed -i '/KernelSU/d' drivers/Makefile 2>/dev/null || true
+              ;;
+          esac
+
+      # ────────────────────────────────────────────
+      # 7. Apply custom patches
+      # ────────────────────────────────────────────
+      - name: Apply custom performance patches
+        working-directory: kernel-source
+        run: |
+          echo "[+] Applying custom alioth patches..."
+          PATCH_DIR="../build-repo/patches"
+          if [ -d "$PATCH_DIR" ]; then
+            for patch in "$PATCH_DIR"/*.patch; do
+              [ -f "$patch" ] || continue
+              git apply "$patch" \
+                --ignore-space-change \
+                --ignore-whitespace \
+                2>/dev/null \
+                && echo "  [ok]   $(basename $patch)" \
+                || echo "  [skip] $(basename $patch) — conflict/already applied"
+            done
+          fi
+          echo "[+] Patches done"
+
+      # ────────────────────────────────────────────
+      # 8. Build kernel
+      # ────────────────────────────────────────────
+      - name: Build kernel
+        working-directory: kernel-source
+        run: |
+          export PATH="$HOME/toolchains/neutron-clang/bin:$PATH"
+          JOBS=$(nproc --all)
+          echo "[+] Building with $JOBS jobs..."
+
+          MAKE_ARGS=(
+            ARCH=arm64
+            SUBARCH=arm64
+            CC="ccache clang"
+            CLANG_TRIPLE=aarch64-linux-gnu-
+            CROSS_COMPILE=aarch64-linux-gnu-
+            CROSS_COMPILE_ARM32=arm-linux-gnueabi-
+            LD=ld.lld
+            AR=llvm-ar
+            NM=llvm-nm
+            OBJCOPY=llvm-objcopy
+            OBJDUMP=llvm-objdump
+            STRIP=llvm-strip
+            O=out
+            -j"$JOBS"
+          )
+
+          # Generate .config from our defconfig
+          echo "[+] Running: make ${{ env.DEFCONFIG }}"
+          make "${MAKE_ARGS[@]}" ${{ env.DEFCONFIG }}
+
+          # Compile
+          echo "[+] Compiling kernel..."
+          START=$(date +%s)
+          make "${MAKE_ARGS[@]}" 2>&1 | tee out/build.log
+          END=$(date +%s)
+          echo "[+] Compiled in $((END-START))s"
+
+          # Verify output
+          if [ ! -f "out/arch/arm64/boot/Image" ]; then
+            echo "ERROR: Kernel Image not found!"
+            tail -50 out/build.log
+            exit 1
+          fi
+          echo "[+] Kernel Image: $(ls -lh out/arch/arm64/boot/Image)"
+          ccache --show-stats
+
+      # ────────────────────────────────────────────
+      # 9. Package into AnyKernel3 zip
+      # ────────────────────────────────────────────
+      - name: Package AnyKernel3 zip
+        run: |
+          ROOT="${{ github.event.inputs.root_manager || 'kernelsu' }}"
+          TIMESTAMP="$(date +%Y%m%d-%H%M)"
+          ZIP_NAME="Alioth-Kernel-${ROOT}-${TIMESTAMP}.zip"
+
+          git clone --depth=1 ${{ env.ANYKERNEL_REPO }} anykernel3
+
+          # Use our custom anykernel.sh
+          cp -f build-repo/anykernel3/anykernel.sh anykernel3/anykernel.sh
+          # Copy kernel image
+          cp -f kernel-source/out/arch/arm64/boot/Image anykernel3/Image
+          # Copy Image.gz-dtb if exists
+          [ -f kernel-source/out/arch/arm64/boot/Image.gz-dtb ] && \
+            cp -f kernel-source/out/arch/arm64/boot/Image.gz-dtb anykernel3/ || true
+          [ -f kernel-source/out/arch/arm64/boot/dtbo.img ] && \
+            cp -f kernel-source/out/arch/arm64/boot/dtbo.img anykernel3/ || true
+
+          cd anykernel3
+          zip -r9 "../${ZIP_NAME}" . \
+            -x "*.git*" -x "*.DS_Store" -x "README.md"
+          cd ..
+
+          echo "ZIP_NAME=$ZIP_NAME" >> $GITHUB_ENV
+          echo "[+] Package ready: $(ls -lh $ZIP_NAME)"
+
+      # ────────────────────────────────────────────
+      # 10. Upload artifacts
+      # ────────────────────────────────────────────
+      - name: Upload flashable zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: Alioth-Kernel-${{ github.event.inputs.root_manager || 'kernelsu' }}-${{ github.run_number }}
+          path: "*.zip"
+          retention-days: 30
+
+      - name: Upload build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log-${{ github.run_number }}
+          path: kernel-source/out/build.log
+          retention-days: 7
+
+      # ────────────────────────────────────────────
+      # 11. Summary
+      # ────────────────────────────────────────────
+      - name: Build summary
+        if: success()
+        run: |
+          echo "## ✅ Build Success" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Device | Poco F3 / Mi 11X (alioth) |" >> $GITHUB_STEP_SUMMARY
+          echo "| SoC | Snapdragon 870 (SM8250) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Root Manager | ${{ github.event.inputs.root_manager || 'kernelsu' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Kernel Branch | ${{ env.KERNEL_BRANCH }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Defconfig | ${{ env.DEFCONFIG }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| ZIP | ${{ env.ZIP_NAME }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Download the zip from **Artifacts** section above ↑" >> $GITHUB_STEP_SUMMARY
