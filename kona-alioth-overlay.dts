@@ -1,0 +1,126 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * Alioth (POCO F3) DTBO Configuration
+ * Display and overlay settings optimized for performance
+ */
+
+/dts-v1/;
+/plugin/;
+
+&soc {
+    // Display performance tuning
+    qcom,mdss_dsi@ae00000 {
+        compatible = "qcom,mdss_dsi";
+
+        // 120Hz support
+        qcom,dsi-display-active {
+            compatible = "qcom,dsi-display";
+            label = "primary";
+
+            qcom,display-topology = <1 0>;
+            qcom,dsi-ctrl-num = <1>;
+            qcom,dsi-phy-num = <1>;
+
+            qcom,panel-mode = "video_mode";
+            qcom,mdss-dsi-panel-framerate = <120>;
+
+            // HDR support
+            qcom,mdss-dsi-hdr-enabled;
+
+            // Brightness
+            qcom,mdss-dsi-bl-pmic-control-type = "bl_ctrl_dcs";
+            qcom,mdss-dsi-bl-min-level = <1>;
+            qcom,mdss-dsi-bl-max-level = <4095>;
+        };
+    };
+
+    // GPU performance tuning
+    qcom,kgsl-3d0@3d00000 {
+        compatible = "qcom,kgsl-3d0";
+
+        // GPU frequency table
+        qcom,gpu-freq-table = <220000000 305000000 428000000 514000000
+                               596000000 670000000 725000000 778000000
+                               810000000 835000000 865000000 890000000
+                               900000000>;
+
+        // Performance governor
+        qcom,initial-pwrlevel = <5>;
+        qcom,idle-timeout = <80>;
+        qcom,strtstp-sleepwake = <1>;
+    };
+
+    // CPU performance tuning
+    qcom,cpufreq-hw@17d43000 {
+        compatible = "qcom,cpufreq-hw";
+
+        // Little cluster (CPU0-3)
+        qcom,freq-domain0-cpus = <&CPU0 &CPU1 &CPU2 &CPU3>;
+        qcom,freq-domain0-freq-table = <300000 576000 614400 864000
+                                        1056000 1209600 1363200 1478400
+                                        1516800 1651200 1708800 1804800>;
+
+        // Big cluster (CPU4-7)
+        qcom,freq-domain1-cpus = <&CPU4 &CPU5 &CPU6 &CPU7>;
+        qcom,freq-domain1-freq-table = <710400 844800 960000 1075200
+                                        1209600 1324800 1555200 1670400
+                                        1766400 1862400 1939200 2016000
+                                        2131200 2208000 2227200 2361600
+                                        2400000 2500000 2841600>;
+    };
+
+    // Touchscreen configuration
+    qcom,touchscreen@3b {
+        compatible = "qcom,touchscreen";
+
+        // Touch sensitivity
+        qcom,touch-sensitivity = <100>;
+        qcom,touch-report-rate = <120>;
+
+        // Double tap to wake
+        qcom,double-tap-enabled;
+    };
+
+    // Battery configuration
+    qcom,battery-data {
+        compatible = "qcom,battery-data";
+
+        // Fast charging
+        qcom,fast-charge-allowed;
+        qcom,max-charge-current = <6000000>;
+        qcom,max-charge-voltage = <4400000>;
+
+        // Battery capacity
+        qcom,battery-capacity = <4520>;
+    };
+
+    // USB configuration
+    qcom,usb@a600000 {
+        compatible = "qcom,dwc3";
+
+        // USB 3.0 support
+        qcom,usb3-support;
+
+        // Fast charge
+        qcom,fast-charge-enabled;
+        qcom,fast-charge-current = <3000000>;
+    };
+
+    // WiFi configuration
+    qcom,wlan@18800000 {
+        compatible = "qcom,wcn3990";
+
+        // WiFi 6 support
+        qcom,wifi6-enabled;
+    };
+
+    // Audio configuration
+    qcom,msm-audio-devmgr {
+        compatible = "qcom,msm-audio-devmgr";
+
+        // Hi-Res audio support
+        qcom,hifi-audio-enabled;
+        qcom,sample-rate = <192000>;
+        qcom,bit-depth = <32>;
+    };
+};

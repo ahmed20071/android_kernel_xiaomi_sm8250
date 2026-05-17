@@ -1,0 +1,27 @@
+#!/sbin/sh
+# AnyKernel3 Backend
+# osm0sis @ xda-developers
+
+OUTFD=/proc/self/fd/$2;
+ZIPFILE="$3";
+
+ui_print() {
+    echo -e "ui_print $1" >> $OUTFD;
+    echo -e "ui_print" >> $OUTFD;
+}
+
+ui_print " "
+ui_print "===================================="
+ui_print "  Alioth Ultra Performance Kernel"
+ui_print "===================================="
+ui_print " "
+
+# Extract files
+mkdir -p /tmp/anykernel
+cd /tmp/anykernel
+unzip -o "$ZIPFILE"
+
+# Run main script
+sh anykernel.sh
+
+exit 0

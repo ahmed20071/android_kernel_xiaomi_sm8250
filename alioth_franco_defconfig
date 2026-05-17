@@ -1,0 +1,127 @@
+#
+# Alioth Ultra Performance Kernel Config - Franco Kernel Manager Edition
+# All tunables exposed for maximum customization
+#
+
+#========================================
+# Franco Kernel Manager - CPU Tunables
+#========================================
+CONFIG_CPU_FREQ_STAT=y
+CONFIG_CPU_FREQ_STAT_DETAILS=y
+CONFIG_CPU_FREQ_TIMES=y
+CONFIG_CPU_FREQ_DEFAULT_GOV_SCHEDUTIL=y
+
+# All governors available
+CONFIG_CPU_FREQ_GOV_PERFORMANCE=y
+CONFIG_CPU_FREQ_GOV_POWERSAVE=y
+CONFIG_CPU_FREQ_GOV_USERSPACE=y
+CONFIG_CPU_FREQ_GOV_ONDEMAND=y
+CONFIG_CPU_FREQ_GOV_CONSERVATIVE=y
+CONFIG_CPU_FREQ_GOV_INTERACTIVE=y
+CONFIG_CPU_FREQ_GOV_SCHEDUTIL=y
+
+# CPU boost
+CONFIG_CPU_BOOST=y
+CONFIG_CPU_INPUT_BOOST=y
+
+#========================================
+# Franco Kernel Manager - GPU Tunables
+#========================================
+CONFIG_QCOM_KGSL=y
+CONFIG_QCOM_KGSL_CORE=y
+CONFIG_QCOM_KGSL_CONTEXT=y
+CONFIG_QCOM_KGSL_IOMMU=y
+
+# GPU governors
+CONFIG_DEVFREQ_GOV_SIMPLE_ONDEMAND=y
+CONFIG_DEVFREQ_GOV_PERFORMANCE=y
+CONFIG_DEVFREQ_GOV_POWERSAVE=y
+CONFIG_DEVFREQ_GOV_USERSPACE=y
+CONFIG_DEVFREQ_GOV_PASSIVE=y
+CONFIG_DEVFREQ_GOV_CPUFREQ=y
+
+# GPU boost
+CONFIG_GPU_BOOST=y
+CONFIG_GPU_INPUT_BOOST=y
+
+#========================================
+# Franco Kernel Manager - Thermal Tunables
+#========================================
+CONFIG_THERMAL=y
+CONFIG_THERMAL_GOV_STEP_WISE=y
+CONFIG_THERMAL_GOV_FAIR_SHARE=y
+CONFIG_THERMAL_GOV_USER_SPACE=y
+CONFIG_THERMAL_GOV_POWER_ALLOCATOR=y
+CONFIG_THERMAL_WRITABLE_TRIPS=y
+CONFIG_THERMAL_HWMON=y
+
+#========================================
+# Franco Kernel Manager - I/O Tunables
+#========================================
+CONFIG_IOSCHED_NOOP=y
+CONFIG_IOSCHED_DEADLINE=y
+CONFIG_IOSCHED_CFQ=y
+CONFIG_IOSCHED_BFQ=y
+CONFIG_CFQ_GROUP_IOSCHED=y
+CONFIG_BFQ_GROUP_IOSCHED=y
+CONFIG_DEFAULT_BFQ=y
+
+# I/O boost
+CONFIG_IO_BOOST=y
+
+#========================================
+# Franco Kernel Manager - Memory Tunables
+#========================================
+CONFIG_ZSMALLOC=y
+CONFIG_ZRAM=y
+CONFIG_ZRAM_WRITEBACK=y
+CONFIG_ZRAM_MULTI_COMP=y
+CONFIG_KSM=y
+
+#========================================
+# Franco Kernel Manager - Voltage Control
+#========================================
+CONFIG_REGULATOR_DEBUG=y
+CONFIG_REGULATOR_FIXED_VOLTAGE=y
+CONFIG_REGULATOR_VIRTUAL=y
+
+#========================================
+# Franco Kernel Manager - Sound Control
+#========================================
+CONFIG_SND_SOC=y
+CONFIG_SND_SOC_QCOM=y
+CONFIG_SND_SOC_SM8250=y
+
+#========================================
+# Franco Kernel Manager - Display Tunables
+#========================================
+CONFIG_DRM=y
+CONFIG_DRM_MSM=y
+CONFIG_DRM_MSM_DPU=y
+CONFIG_DRM_MSM_DP=y
+CONFIG_DRM_MSM_DSI=y
+
+#========================================
+# Franco Kernel Manager - Input Tunables
+#========================================
+CONFIG_INPUT=y
+CONFIG_INPUT_EVDEV=y
+CONFIG_INPUT_TOUCHSCREEN=y
+CONFIG_INPUT_MISC=y
+CONFIG_INPUT_BOOST=y
+
+#========================================
+# Franco Kernel Manager - Battery Tunables
+#========================================
+CONFIG_QCOM_QNOVO=y
+CONFIG_QCOM_SMB5=y
+CONFIG_QCOM_SMB1398=y
+CONFIG_FORCE_FAST_CHARGE=y
+
+#========================================
+# Franco Kernel Manager - Misc Tunables
+#========================================
+CONFIG_WIREGUARD=y
+CONFIG_TCP_CONG_BBR=y
+CONFIG_TCP_CONG_BBR2=y
+CONFIG_DEFAULT_BBR=y

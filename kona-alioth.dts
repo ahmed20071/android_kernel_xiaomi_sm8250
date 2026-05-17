@@ -1,0 +1,301 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * Alioth (POCO F3) Device Tree Configuration
+ * Optimized for maximum performance and UI smoothness
+ */
+
+/dts-v1/;
+
+/ {
+    model = "Qualcomm Technologies, Inc. Kona MTP";
+    compatible = "qcom,kona-mtp", "qcom,kona";
+    qcom,board-id = <0x010000 0>;
+
+    // Performance tuning nodes
+    aliases {
+        serial0 = &uart9;
+    };
+
+    chosen {
+        bootargs = "androidboot.hardware=qcom androidboot.console=ttyMSM0 androidboot.memcg=1 lpm_levels.sleep_disabled=1 video=vfb:640x400,bpp=32,memsize=3072000 msm_rtb.filter=0x237 service_locator.enable=1 androidboot.usbcontroller=a600000.dwc3 swiotlb=2048 loop.max_part=7 cgroup.memory=nokmem,nosocket reboot=panic_warm buildvariant=userdebug";
+        stdout-path = "serial0:115200n8";
+    };
+
+    // CPU Configuration
+    cpus {
+        #address-cells = <2>;
+        #size-cells = <0>;
+
+        CPU0: cpu@0 {
+            device_type = "cpu";
+            compatible = "arm,armv8";
+            reg = <0x0 0x0>;
+            enable-method = "psci";
+            cpu-idle-states = <&LITTLE_CPU_SLEEP_0 &LITTLE_CPU_SLEEP_1 &LITTLE_CPU_SLEEP_2 &LITTLE_CPU_SLEEP_3>;
+            capacity-dmips-mhz = <1024>;
+            dynamic-power-coefficient = <100>;
+            qcom,freq-domain = <&cpufreq_hw 0>;
+            #cooling-cells = <2>;
+            next-level-cache = <&L2_0>;
+            L2_0: l2-cache {
+                compatible = "arm,arch-cache";
+                cache-level = <2>;
+                cache-unified;
+                cache-size = <0x80000>;
+                cache-line-size = <64>;
+                cache-sets = <512>;
+                next-level-cache = <&L3_0>;
+            };
+            L1_I0: l1-icache {
+                compatible = "arm,arch-cache";
+                cache-level = <1>;
+                cache-size = <0x8000>;
+                cache-line-size = <64>;
+                cache-sets = <256>;
+            };
+            L1_D0: l1-dcache {
+                compatible = "arm,arch-cache";
+                cache-level = <1>;
+                cache-size = <0x8000>;
+                cache-line-size = <64>;
+                cache-sets = <256>;
+            };
+        };
+
+        CPU1: cpu@1 {
+            device_type = "cpu";
+            compatible = "arm,armv8";
+            reg = <0x0 0x1>;
+            enable-method = "psci";
+            cpu-idle-states = <&LITTLE_CPU_SLEEP_0 &LITTLE_CPU_SLEEP_1 &LITTLE_CPU_SLEEP_2 &LITTLE_CPU_SLEEP_3>;
+            capacity-dmips-mhz = <1024>;
+            dynamic-power-coefficient = <100>;
+            qcom,freq-domain = <&cpufreq_hw 0>;
+            next-level-cache = <&L2_0>;
+        };
+
+        CPU2: cpu@2 {
+            device_type = "cpu";
+            compatible = "arm,armv8";
+            reg = <0x0 0x2>;
+            enable-method = "psci";
+            cpu-idle-states = <&LITTLE_CPU_SLEEP_0 &LITTLE_CPU_SLEEP_1 &LITTLE_CPU_SLEEP_2 &LITTLE_CPU_SLEEP_3>;
+            capacity-dmips-mhz = <1024>;
+            dynamic-power-coefficient = <100>;
+            qcom,freq-domain = <&cpufreq_hw 0>;
+            next-level-cache = <&L2_0>;
+        };
+
+        CPU3: cpu@3 {
+            device_type = "cpu";
+            compatible = "arm,armv8";
+            reg = <0x0 0x3>;
+            enable-method = "psci";
+            cpu-idle-states = <&LITTLE_CPU_SLEEP_0 &LITTLE_CPU_SLEEP_1 &LITTLE_CPU_SLEEP_2 &LITTLE_CPU_SLEEP_3>;
+            capacity-dmips-mhz = <1024>;
+            dynamic-power-coefficient = <100>;
+            qcom,freq-domain = <&cpufreq_hw 0>;
+            next-level-cache = <&L2_0>;
+        };
+
+        CPU4: cpu@100 {
+            device_type = "cpu";
+            compatible = "arm,armv8";
+            reg = <0x0 0x100>;
+            enable-method = "psci";
+            cpu-idle-states = <&BIG_CPU_SLEEP_0 &BIG_CPU_SLEEP_1 &BIG_CPU_SLEEP_2 &BIG_CPU_SLEEP_3>;
+            capacity-dmips-mhz = <1740>;
+            dynamic-power-coefficient = <405>;
+            qcom,freq-domain = <&cpufreq_hw 1>;
+            #cooling-cells = <2>;
+            next-level-cache = <&L2_1>;
+            L2_1: l2-cache {
+                compatible = "arm,arch-cache";
+                cache-level = <2>;
+                cache-unified;
+                cache-size = <0x100000>;
+                cache-line-size = <64>;
+                cache-sets = <1024>;
+                next-level-cache = <&L3_0>;
+            };
+        };
+
+        CPU5: cpu@101 {
+            device_type = "cpu";
+            compatible = "arm,armv8";
+            reg = <0x0 0x101>;
+            enable-method = "psci";
+            cpu-idle-states = <&BIG_CPU_SLEEP_0 &BIG_CPU_SLEEP_1 &BIG_CPU_SLEEP_2 &BIG_CPU_SLEEP_3>;
+            capacity-dmips-mhz = <1740>;
+            dynamic-power-coefficient = <405>;
+            qcom,freq-domain = <&cpufreq_hw 1>;
+            next-level-cache = <&L2_1>;
+        };
+
+        CPU6: cpu@102 {
+            device_type = "cpu";
+            compatible = "arm,armv8";
+            reg = <0x0 0x102>;
+            enable-method = "psci";
+            cpu-idle-states = <&BIG_CPU_SLEEP_0 &BIG_CPU_SLEEP_1 &BIG_CPU_SLEEP_2 &BIG_CPU_SLEEP_3>;
+            capacity-dmips-mhz = <1740>;
+            dynamic-power-coefficient = <405>;
+            qcom,freq-domain = <&cpufreq_hw 1>;
+            next-level-cache = <&L2_1>;
+        };
+
+        CPU7: cpu@103 {
+            device_type = "cpu";
+            compatible = "arm,armv8";
+            reg = <0x0 0x103>;
+            enable-method = "psci";
+            cpu-idle-states = <&BIG_CPU_SLEEP_0 &BIG_CPU_SLEEP_1 &BIG_CPU_SLEEP_2 &BIG_CPU_SLEEP_3>;
+            capacity-dmips-mhz = <1740>;
+            dynamic-power-coefficient = <405>;
+            qcom,freq-domain = <&cpufreq_hw 1>;
+            next-level-cache = <&L2_1>;
+        };
+
+        // Idle states optimized for performance
+        idle-states {
+            LITTLE_CPU_SLEEP_0: qcom,idle-state-little-0 {
+                compatible = "arm,idle-state";
+                idle-state-name = "little-retention";
+                arm,psci-suspend-param = <0x00000001>;
+                entry-latency-us = <40>;
+                exit-latency-us = <60>;
+                min-residency-us = <100>;
+            };
+
+            LITTLE_CPU_SLEEP_1: qcom,idle-state-little-1 {
+                compatible = "arm,idle-state";
+                idle-state-name = "little-power-collapse";
+                arm,psci-suspend-param = <0x00000004>;
+                entry-latency-us = <200>;
+                exit-latency-us = <400>;
+                min-residency-us = <1000>;
+            };
+
+            BIG_CPU_SLEEP_0: qcom,idle-state-big-0 {
+                compatible = "arm,idle-state";
+                idle-state-name = "big-retention";
+                arm,psci-suspend-param = <0x00000001>;
+                entry-latency-us = <50>;
+                exit-latency-us = <80>;
+                min-residency-us = <150>;
+            };
+
+            BIG_CPU_SLEEP_1: qcom,idle-state-big-1 {
+                compatible = "arm,idle-state";
+                idle-state-name = "big-power-collapse";
+                arm,psci-suspend-param = <0x00000004>;
+                entry-latency-us = <300>;
+                exit-latency-us = <600>;
+                min-residency-us = <1500>;
+            };
+        };
+    };
+
+    // Memory node
+    memory@80000000 {
+        device_type = "memory";
+        reg = <0x0 0x80000000 0x0 0x3E800000>;
+    };
+
+    // Reserved memory
+    reserved-memory {
+        #address-cells = <2>;
+        #size-cells = <2>;
+        ranges;
+
+        // RAMoops
+        ramoops_region: ramoops@b0000000 {
+            compatible = "ramoops";
+            reg = <0x0 0xb0000000 0x0 0x800000>;
+            record-size = <0x40000>;
+            console-size = <0x40000>;
+            ftrace-size = <0x40000>;
+            msg-size = <0x20000>;
+        };
+
+        // GPU memory
+        gpu_mem: gpu_region@b0800000 {
+            compatible = "shared-dma-pool";
+            alloc-ranges = <0x0 0xb0800000 0x0 0x2000000>;
+            reusable;
+        };
+
+        // Display memory
+        display_mem: display_region@b2800000 {
+            compatible = "shared-dma-pool";
+            alloc-ranges = <0x0 0xb2800000 0x0 0x1000000>;
+            reusable;
+        };
+    };
+
+    // Thermal zones
+    thermal-zones {
+        // CPU thermal
+        cpu-thermal {
+            polling-delay-passive = <250>;
+            polling-delay = <1000>;
+            thermal-sensors = <&tsens0 0>;
+
+            trips {
+                cpu_alert0: trip0 {
+                    temperature = <95000>;
+                    hysteresis = <2000>;
+                    type = "passive";
+                };
+                cpu_alert1: trip1 {
+                    temperature = <115000>;
+                    hysteresis = <2000>;
+                    type = "hot";
+                };
+                cpu_crit: trip2 {
+                    temperature = <125000>;
+                    hysteresis = <2000>;
+                    type = "critical";
+                };
+            };
+
+            cooling-maps {
+                map0 {
+                    trip = <&cpu_alert0>;
+                    cooling-device = <&CPU0 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
+                                    <&CPU1 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
+                                    <&CPU2 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
+                                    <&CPU3 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
+                                    <&CPU4 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
+                                    <&CPU5 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
+                                    <&CPU6 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>,
+                                    <&CPU7 THERMAL_NO_LIMIT THERMAL_NO_LIMIT>;
+                };
+            };
+        };
+
+        // GPU thermal
+        gpu-thermal {
+            polling-delay-passive = <250>;
+            polling-delay = <1000>;
+            thermal-sensors = <&tsens0 1>;
+
+            trips {
+                gpu_alert0: trip0 {
+                    temperature = <95000>;
+                    hysteresis = <2000>;
+                    type = "passive";
+                };
+                gpu_crit: trip1 {
+                    temperature = <115000>;
+                    hysteresis = <2000>;
+                    type = "critical";
+                };
+            };
+        };
+    };
+};
+
+// Include standard SM8250 peripherals
+#include "sm8250.dtsi"
+#include "sm8250-pinctrl.dtsi"

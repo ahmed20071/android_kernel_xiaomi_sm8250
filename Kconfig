@@ -1,32 +1,37 @@
-# SPDX-License-Identifier: GPL-2.0
-#
-# For a description of the syntax of this configuration file,
-# see Documentation/kbuild/kconfig-language.txt.
-#
-mainmenu "Linux/$(ARCH) $(KERNELVERSION) Kernel Configuration"
+config ALIOTH_PERF
+    bool "Alioth Ultra Performance Tweaks"
+    default y
+    help
+      Enable Alioth Ultra Performance scheduler tweaks for maximum
+      UI smoothness on SM8250 platform. Includes input boost,
+      CPU/GPU/RAM boost, VSync/FSync control, and frame boost.
 
-source "scripts/Kconfig.include"
+      This driver is compatible with Franco Kernel Manager and
+      provides sysfs interfaces for tuning.
 
-source "init/Kconfig"
+config ALIOTH_RAM
+    bool "Alioth Adaptive RAM Optimization"
+    default y
+    help
+      Enable adaptive RAM optimization for Alioth devices.
+      Automatically tunes swappiness, zRAM, and memory reclaim
+      based on total RAM size and current workload.
+      Compatible with all custom ROMs.
 
-source "kernel/Kconfig.freezer"
+config ALIOTH_GPU
+    bool "Alioth GPU Boost & Control"
+    default y
+    help
+      Enable GPU boost and control module for Alioth devices.
+      Provides sysfs interfaces for GPU frequency control,
+      boost settings, governor selection, and preemption tuning.
+      Compatible with Franco Kernel Manager GPU tunables.
 
-source "fs/Kconfig.binfmt"
-
-source "mm/Kconfig"
-
-source "net/Kconfig"
-
-source "drivers/Kconfig"
-
-source "fs/Kconfig"
-
-source "security/Kconfig"
-
-source "crypto/Kconfig"
-
-source "lib/Kconfig"
-
-source "lib/Kconfig.debug"
-
-source "techpack/Kconfig"
+config ALIOTH_CPU
+    bool "Alioth CPU Frequency & Governor Control"
+    default y
+    help
+      Enable CPU frequency and governor control module for Alioth.
+      Provides sysfs interfaces for per-cluster governor selection,
+      min/max frequency control, boost settings, and governor tunables.
+      Compatible with Franco Kernel Manager CPU tunables.
